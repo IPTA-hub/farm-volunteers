@@ -23,8 +23,7 @@ export default function LoginPage() {
         setLoading(false)
         return
       }
-      router.push('/')
-      router.refresh()
+      window.location.href = '/'
     } catch (err) {
       setError(err?.message ?? 'Unexpected error — please try again.')
       setLoading(false)
