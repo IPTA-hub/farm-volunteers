@@ -23,7 +23,7 @@ export default function RegisterPage() {
     setLoading(true)
     setError('')
     const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: {
@@ -34,6 +34,17 @@ export default function RegisterPage() {
       setError(error.message)
       setLoading(false)
       return
+    }
+    if (data?.user) {
+      await fetch('/api/create-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: data.user.id,
+          full_name: form.full_name,
+          phone: form.phone,
+        }),
+      })
     }
     router.push('/')
     router.refresh()
