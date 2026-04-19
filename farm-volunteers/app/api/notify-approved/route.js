@@ -3,9 +3,6 @@ import { Resend } from 'resend'
 import twilio from 'twilio'
 import { createServiceClient } from '@/lib/supabase/server'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-
 const TYPE_LABELS = {
   sidewalking: 'Sidewalking',
   horse_assisting: 'Horse Assisting',
@@ -33,13 +30,16 @@ export async function POST(request) {
 
   const supabase = createServiceClient()
 
-  const [{ data: profile }, { data: shift }] = await Promise.all([
+  const [{ data: profile, error: profileError }, { data: shift, error: shiftError }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', volunteerId).single(),
     supabase.from('shifts').select('*').eq('id', shiftId).single(),
   ])
 
+  if (profileError) console.error('Profile fetch error:', profileError.message)
+  if (shiftError) console.error('Shift fetch error:', shiftError.message)
+
   if (!profile || !shift) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    return NextResponse.json({ error: 'Not found', profileError, shiftError }, { status: 404 })
   }
 
   const { data: authUser } = await supabase.auth.admin.getUserById(volunteerId)
@@ -49,11 +49,12 @@ export async function POST(request) {
   const dateStr = fmtDate(shift.date)
   const timeStr = `${fmt12(shift.start_time)} – ${fmt12(shift.end_time)}`
 
-  const tasks = []
+  const results = {}
 
   if (profile.email_notifications && email) {
-    tasks.push(
-      resend.emails.send({
+    try {
+      const resend = new Resend(process.env.RESEND_API_KEY)
+      const emailResult = await resend.emails.send({
         from: process.env.RESEND_FROM_EMAIL,
         to: email,
         subject: `You're confirmed for ${shiftLabel} on ${dateStr}`,
@@ -69,21 +70,32 @@ export async function POST(request) {
           '',
           `We look forward to seeing you at the farm. Please contact us if you need to cancel.`,
         ].filter(Boolean).join('\n'),
-      }).catch(() => null)
-    )
+      })
+      results.email = emailResult
+    } catch (err) {
+      console.error('Email error:', err.message)
+      results.emailError = err.message
+    }
+  } else {
+    results.emailSkipped = `email_notifications=${profile.email_notifications}, email=${email}`
   }
 
   if (profile.sms_notifications && profile.phone) {
-    tasks.push(
-      twilioClient.messages.create({
+    try {
+      const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+      const smsResult = await twilioClient.messages.create({
         from: process.env.TWILIO_PHONE_NUMBER,
         to: profile.phone,
         body: `Your farm volunteer shift is confirmed! ${shiftLabel} on ${dateStr}, ${timeStr}. See you there!`,
-      }).catch(() => null)
-    )
+      })
+      results.sms = smsResult.sid
+    } catch (err) {
+      console.error('SMS error:', err.message)
+      results.smsError = err.message
+    }
+  } else {
+    results.smsSkipped = `sms_notifications=${profile.sms_notifications}, phone=${profile.phone}`
   }
 
-  await Promise.all(tasks)
-
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, results })
 }
