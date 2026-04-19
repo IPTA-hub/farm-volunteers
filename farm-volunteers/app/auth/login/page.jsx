@@ -1,31 +1,19 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { signIn } from './actions'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
 
   async function handleLogin(e) {
     e.preventDefault()
     setLoading(true)
     setError('')
-    try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) {
-        setError(error.message)
-        setLoading(false)
-        return
-      }
-      window.location.href = '/'
-    } catch (err) {
-      setError(err?.message ?? 'Unexpected error — please try again.')
+    const result = await signIn(new FormData(e.target))
+    if (result?.error) {
+      setError(result.error)
       setLoading(false)
     }
   }
@@ -48,8 +36,7 @@ export default function LoginPage() {
             <label className="block text-sm font-medium text-stone-700 mb-1">Email</label>
             <input
               type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
+              name="email"
               required
               className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
             />
@@ -58,8 +45,7 @@ export default function LoginPage() {
             <label className="block text-sm font-medium text-stone-700 mb-1">Password</label>
             <input
               type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
+              name="password"
               required
               className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
             />
