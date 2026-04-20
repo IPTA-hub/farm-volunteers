@@ -16,7 +16,8 @@ export default async function ApprovalsPage() {
     .select(`
       id, status, created_at,
       volunteer:profiles(full_name, phone, id),
-      shift:shifts(id, type, date, start_time, end_time, slots_available)
+      shift:shifts(id, type, date, start_time, end_time, slots_available),
+      hours
     `)
     .order('created_at', { ascending: false })
 

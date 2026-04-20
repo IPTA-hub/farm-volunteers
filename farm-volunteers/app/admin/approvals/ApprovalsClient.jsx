@@ -34,7 +34,19 @@ export default function ApprovalsClient({ signups: initial }) {
 
     setLoading(l => ({ ...l, [signupId]: true }))
     const supabase = createClient()
-    await supabase.from('shift_signups').update({ status: newStatus }).eq('id', signupId)
+
+    // Calculate hours when approving
+    let hours = null
+    if (newStatus === 'approved') {
+      const shift = signups.find(s => s.id === signupId)?.shift
+      if (shift?.start_time && shift?.end_time) {
+        const [sh, sm] = shift.start_time.split(':').map(Number)
+        const [eh, em] = shift.end_time.split(':').map(Number)
+        hours = parseFloat(((eh * 60 + em - sh * 60 - sm) / 60).toFixed(2))
+      }
+    }
+
+    await supabase.from('shift_signups').update({ status: newStatus, ...(hours !== null ? { hours } : {}) }).eq('id', signupId)
 
     if (newStatus === 'approved') {
       fetch('/api/notify-approved', {

@@ -16,6 +16,7 @@ export default function Navbar({ role, name }) {
   const adminLinks = [
     { href: '/admin', label: 'Dashboard' },
     { href: '/admin/calendar', label: 'Calendar' },
+    { href: '/admin/volunteers', label: 'Volunteers' },
     { href: '/admin/new-shift', label: 'Post Shift' },
     { href: '/admin/approvals', label: 'Approvals' },
   ]
