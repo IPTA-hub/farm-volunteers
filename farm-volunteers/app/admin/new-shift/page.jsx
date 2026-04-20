@@ -11,6 +11,12 @@ const SHIFT_TYPES = [
   { value: 'weekend_care',    label: 'Weekend Care' },
 ]
 
+const RECURRENCE_OPTIONS = [
+  { value: 'none',     label: 'One-time' },
+  { value: 'weekly',   label: 'Weekly' },
+  { value: 'biweekly', label: 'Every 2 weeks' },
+]
+
 export default function NewShiftPage() {
   const [form, setForm] = useState({
     type: 'sidewalking',
@@ -19,13 +25,14 @@ export default function NewShiftPage() {
     end_time: '',
     slots_available: 1,
     notes: '',
+    recurrence: 'none',
+    recurrence_end_date: '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [profile, setProfile] = useState(null)
   const router = useRouter()
 
-  // Load profile once on mount to get name for navbar
   useState(() => {
     createClient()
       .from('profiles')
@@ -45,24 +52,49 @@ export default function NewShiftPage() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    const { data: shift, error: insertError } = await supabase
-      .from('shifts')
-      .insert({ ...form, slots_available: Number(form.slots_available), created_by: user.id })
-      .select()
-      .single()
+    if (form.recurrence === 'none') {
+      // Single shift
+      const { data: shift, error: insertError } = await supabase
+        .from('shifts')
+        .insert({
+          type: form.type,
+          date: form.date,
+          start_time: form.start_time,
+          end_time: form.end_time,
+          slots_available: Number(form.slots_available),
+          notes: form.notes,
+          recurrence: 'none',
+          created_by: user.id,
+        })
+        .select()
+        .single()
 
-    if (insertError) {
-      setError(insertError.message)
-      setLoading(false)
-      return
+      if (insertError) {
+        setError(insertError.message)
+        setLoading(false)
+        return
+      }
+
+      fetch('/api/notify-new-shift', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shiftId: shift.id }),
+      }).catch(() => {})
+
+    } else {
+      // Recurring shifts — generate via API
+      const res = await fetch('/api/create-recurring-shifts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, slots_available: Number(form.slots_available), userId: user.id }),
+      })
+      const result = await res.json()
+      if (result.error) {
+        setError(result.error)
+        setLoading(false)
+        return
+      }
     }
-
-    // Fire-and-forget: notify all volunteers
-    fetch('/api/notify-new-shift', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-notifications-secret': process.env.NEXT_PUBLIC_NOTIFICATIONS_SECRET ?? '' },
-      body: JSON.stringify({ shiftId: shift.id }),
-    }).catch(() => {})
 
     router.push('/admin')
   }
@@ -150,6 +182,47 @@ export default function NewShiftPage() {
               className="w-32 border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
             />
           </div>
+
+          {/* Recurrence */}
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2">Repeat</label>
+            <div className="flex gap-2">
+              {RECURRENCE_OPTIONS.map(r => (
+                <label
+                  key={r.value}
+                  className={`flex items-center gap-2 border rounded-lg px-3 py-2 cursor-pointer transition-colors text-sm ${
+                    form.recurrence === r.value
+                      ? 'border-green-600 bg-green-50 text-green-800 font-medium'
+                      : 'border-stone-200 hover:border-stone-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="recurrence"
+                    value={r.value}
+                    checked={form.recurrence === r.value}
+                    onChange={set('recurrence')}
+                    className="accent-green-700"
+                  />
+                  {r.label}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {form.recurrence !== 'none' && (
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">Repeat Until</label>
+              <input
+                type="date"
+                value={form.recurrence_end_date}
+                onChange={set('recurrence_end_date')}
+                required
+                min={form.date}
+                className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-stone-700 mb-1">
