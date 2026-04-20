@@ -103,14 +103,24 @@ export default function CalendarClient({ shifts }) {
                   {day}
                 </div>
                 <div className="space-y-0.5">
-                  {dayShifts.slice(0, 2).map(s => (
-                    <div
-                      key={s.id}
-                      className={`text-xs px-1 py-0.5 rounded border truncate ${TYPE_COLORS[s.type]}`}
-                    >
-                      {TYPE_LABELS[s.type]}
-                    </div>
-                  ))}
+                  {dayShifts.slice(0, 2).map(s => {
+                    const isFull = s.approved_count >= s.slots_available
+                    const hasPending = s.pending_count > 0
+                    return (
+                      <div
+                        key={s.id}
+                        className={`text-xs px-1 py-0.5 rounded border truncate flex items-center justify-between gap-1 ${TYPE_COLORS[s.type]}`}
+                      >
+                        <span className="truncate">{TYPE_LABELS[s.type]}</span>
+                        {isFull
+                          ? <span className="shrink-0 w-2 h-2 rounded-full bg-red-500" title="Full" />
+                          : hasPending
+                          ? <span className="shrink-0 w-2 h-2 rounded-full bg-amber-400" title="Has pending" />
+                          : <span className="shrink-0 w-2 h-2 rounded-full bg-green-500" title="Open" />
+                        }
+                      </div>
+                    )
+                  })}
                   {dayShifts.length > 2 && (
                     <div className="text-xs text-stone-400 pl-1">+{dayShifts.length - 2} more</div>
                   )}
@@ -127,6 +137,11 @@ export default function CalendarClient({ shifts }) {
               {label}
             </div>
           ))}
+          <div className="flex items-center gap-3 ml-2 border-l border-stone-200 pl-3">
+            <div className="flex items-center gap-1.5 text-xs text-stone-500"><span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block" /> Open</div>
+            <div className="flex items-center gap-1.5 text-xs text-stone-500"><span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" /> Pending</div>
+            <div className="flex items-center gap-1.5 text-xs text-stone-500"><span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" /> Full</div>
+          </div>
         </div>
       </div>
 
