@@ -113,10 +113,10 @@ export default function CalendarClient({ shifts }) {
                       >
                         <span className="truncate">{TYPE_LABELS[s.type]}</span>
                         {isFull
-                          ? <span className="shrink-0 w-2 h-2 rounded-full bg-red-500" title="Full" />
+                          ? <span className="shrink-0 w-2 h-2 rounded-full bg-green-500" title="Full" />
                           : hasPending
                           ? <span className="shrink-0 w-2 h-2 rounded-full bg-amber-400" title="Has pending" />
-                          : <span className="shrink-0 w-2 h-2 rounded-full bg-green-500" title="Open" />
+                          : <span className="shrink-0 w-2 h-2 rounded-full bg-red-500" title="Open" />
                         }
                       </div>
                     )
@@ -138,9 +138,9 @@ export default function CalendarClient({ shifts }) {
             </div>
           ))}
           <div className="flex items-center gap-3 ml-2 border-l border-stone-200 pl-3">
-            <div className="flex items-center gap-1.5 text-xs text-stone-500"><span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block" /> Open</div>
+            <div className="flex items-center gap-1.5 text-xs text-stone-500"><span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" /> Open</div>
             <div className="flex items-center gap-1.5 text-xs text-stone-500"><span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" /> Pending</div>
-            <div className="flex items-center gap-1.5 text-xs text-stone-500"><span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" /> Full</div>
+            <div className="flex items-center gap-1.5 text-xs text-stone-500"><span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block" /> Full</div>
           </div>
         </div>
       </div>
