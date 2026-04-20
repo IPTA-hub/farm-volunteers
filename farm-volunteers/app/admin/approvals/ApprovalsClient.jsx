@@ -22,6 +22,16 @@ export default function ApprovalsClient({ signups: initial }) {
   const [loading, setLoading] = useState({})
 
   async function updateStatus(signupId, newStatus, volunteerId, shiftId) {
+    // Block approval if shift is already full
+    if (newStatus === 'approved') {
+      const shift = signups.find(s => s.id === signupId)?.shift
+      const approvedCount = signups.filter(s => s.shift.id === shiftId && s.status === 'approved').length
+      if (shift && approvedCount >= shift.slots_available) {
+        alert(`This shift is full (${shift.slots_available} slot${shift.slots_available !== 1 ? 's' : ''}). Reject others before approving more.`)
+        return
+      }
+    }
+
     setLoading(l => ({ ...l, [signupId]: true }))
     const supabase = createClient()
     await supabase.from('shift_signups').update({ status: newStatus }).eq('id', signupId)
@@ -75,6 +85,12 @@ export default function ApprovalsClient({ signups: initial }) {
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <ShiftTypeTag type={su.shift.type} />
                     <StatusBadge status={su.status} />
+                    {(() => {
+                      const approvedCount = signups.filter(s => s.shift.id === su.shift.id && s.status === 'approved').length
+                      return approvedCount >= su.shift.slots_available ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 ring-1 ring-inset ring-red-200">Full</span>
+                      ) : null
+                    })()}
                   </div>
                   <p className="font-semibold text-stone-800 mt-1">{su.volunteer.full_name}</p>
                   {su.volunteer.phone && (
