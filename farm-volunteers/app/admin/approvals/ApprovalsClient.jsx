@@ -57,6 +57,14 @@ export default function ApprovalsClient({ signups: initial }) {
       }).catch(() => {})
     }
 
+    if (newStatus === 'rejected') {
+      fetch('/api/notify-rejected', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ volunteerId, shiftId }),
+      }).catch(() => {})
+    }
+
     setSignups(s => s.map(su => su.id === signupId ? { ...su, status: newStatus } : su))
     setLoading(l => ({ ...l, [signupId]: false }))
   }
