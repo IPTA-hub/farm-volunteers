@@ -18,7 +18,7 @@ function fmt12(t) {
 
 export default function ApprovalsClient({ signups: initial }) {
   const [signups, setSignups] = useState(initial)
-  const [filter, setFilter] = useState('pending')
+  const [filter, setFilter] = useState('all')
   const [loading, setLoading] = useState({})
   const [confirmCancel, setConfirmCancel] = useState(null) // signup object to confirm
 
