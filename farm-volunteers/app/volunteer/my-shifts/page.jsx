@@ -20,7 +20,7 @@ export default async function MyShiftsPage() {
     .order('created_at', { ascending: false })
 
   const upcoming = (signups ?? [])
-    .filter(s => s.shift)
+    .filter(s => s.shift && s.status !== 'cancelled')
     .sort((a, b) => a.shift.date.localeCompare(b.shift.date))
 
   return (

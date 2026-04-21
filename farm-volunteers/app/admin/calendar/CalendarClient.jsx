@@ -109,7 +109,11 @@ export default function CalendarClient({ shifts }) {
                     return (
                       <div
                         key={s.id}
-                        className={`text-xs px-1 py-0.5 rounded border truncate flex items-center justify-between gap-1 ${TYPE_COLORS[s.type]}`}
+                        className={`text-xs px-1 py-0.5 rounded border truncate flex items-center justify-between gap-1 ${
+                          isFull
+                            ? 'bg-stone-100 text-stone-400 border-stone-200'
+                            : TYPE_COLORS[s.type]
+                        }`}
                       >
                         <span className="truncate">{TYPE_LABELS[s.type]}</span>
                         {isFull
@@ -156,17 +160,37 @@ export default function CalendarClient({ shifts }) {
               <div className="text-sm text-stone-400">No shifts this day.</div>
             ) : (
               <div className="space-y-3">
-                {selectedShifts.map(s => (
-                  <div key={s.id} className={`rounded-lg border p-3 ${TYPE_COLORS[s.type]}`}>
-                    <div className="font-medium text-sm">{TYPE_LABELS[s.type]}</div>
-                    <div className="text-xs mt-0.5">{fmt12(s.start_time)} – {fmt12(s.end_time)}</div>
-                    <div className="text-xs mt-1">
-                      {s.approved_count}/{s.slots_available} filled
-                      {s.pending_count > 0 && ` · ${s.pending_count} pending`}
+                {selectedShifts.map(s => {
+                  const isFull = s.approved_count >= s.slots_available
+                  return (
+                    <div key={s.id} className={`rounded-lg border p-3 ${TYPE_COLORS[s.type]}`}>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="font-medium text-sm">{TYPE_LABELS[s.type]}</div>
+                        {isFull && (
+                          <span className="text-xs bg-green-600 text-white px-1.5 py-0.5 rounded-full font-medium shrink-0">
+                            Full
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs mt-0.5">{fmt12(s.start_time)} – {fmt12(s.end_time)}</div>
+                      <div className="text-xs mt-1">
+                        {s.approved_count}/{s.slots_available} filled
+                        {s.pending_count > 0 && ` · ${s.pending_count} pending`}
+                      </div>
+                      {s.approved_volunteers?.length > 0 && (
+                        <div className="mt-2 pt-2 border-t border-current border-opacity-20 space-y-1">
+                          {s.approved_volunteers.map((name, i) => (
+                            <div key={i} className="flex items-center gap-1 text-xs">
+                              <span className="text-green-600 font-bold">✓</span>
+                              <span>{name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {s.notes && <div className="text-xs mt-1.5 opacity-70 italic">{s.notes}</div>}
                     </div>
-                    {s.notes && <div className="text-xs mt-1 opacity-80">{s.notes}</div>}
-                  </div>
-                ))}
+                  )
+                })}
                 <Link
                   href="/admin/approvals"
                   className="block text-center text-xs text-green-700 hover:underline mt-2"

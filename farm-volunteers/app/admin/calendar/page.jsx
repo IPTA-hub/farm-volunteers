@@ -18,7 +18,13 @@ export default async function CalendarPage() {
 
   const { data: shifts } = await supabase
     .from('shifts')
-    .select('*, signups:shift_signups(status)')
+    .select(`
+      *,
+      signups:shift_signups(
+        status,
+        volunteer:profiles(full_name)
+      )
+    `)
     .gte('date', start)
     .lte('date', end)
     .order('date')
@@ -28,6 +34,10 @@ export default async function CalendarPage() {
     ...s,
     approved_count: s.signups?.filter(su => su.status === 'approved').length ?? 0,
     pending_count: s.signups?.filter(su => su.status === 'pending').length ?? 0,
+    approved_volunteers: s.signups
+      ?.filter(su => su.status === 'approved')
+      .map(su => su.volunteer?.full_name)
+      .filter(Boolean) ?? [],
   }))
 
   return (

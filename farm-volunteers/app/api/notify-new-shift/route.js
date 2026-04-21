@@ -40,6 +40,17 @@ export async function POST(request) {
 
   if (!shift) return NextResponse.json({ error: 'Shift not found' }, { status: 404 })
 
+  // Skip notification if shift is already full
+  const { count: approvedCount } = await supabase
+    .from('shift_signups')
+    .select('id', { count: 'exact', head: true })
+    .eq('shift_id', shiftId)
+    .eq('status', 'approved')
+
+  if ((approvedCount ?? 0) >= shift.slots_available) {
+    return NextResponse.json({ sent: 0, skipped: 'shift already full' })
+  }
+
   // Fetch all volunteers with notifications enabled
   const { data: volunteers } = await supabase
     .from('profiles')
