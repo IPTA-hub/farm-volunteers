@@ -19,11 +19,13 @@ export default function Navbar({ role, name }) {
     { href: '/admin/volunteers', label: 'Volunteers' },
     { href: '/admin/new-shift', label: 'Post Shift' },
     { href: '/admin/approvals', label: 'Approvals' },
+    { href: '/admin/trainings', label: 'Trainings' },
   ]
 
   const volunteerLinks = [
     { href: '/volunteer', label: 'Available Shifts' },
     { href: '/volunteer/my-shifts', label: 'My Shifts' },
+    { href: '/volunteer/trainings', label: 'Trainings' },
     { href: '/volunteer/settings', label: 'Notifications' },
   ]
 

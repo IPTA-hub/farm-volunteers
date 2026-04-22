@@ -12,7 +12,7 @@ export default async function VolunteerDashboard() {
 
   const today = new Date().toISOString().split('T')[0]
 
-  const [{ data: shifts }, { data: mySignups }] = await Promise.all([
+  const [{ data: shifts }, { data: mySignups }, { data: myCerts }, { data: nextSessions }] = await Promise.all([
     supabase
       .from('shifts')
       .select('*, approved_signups:shift_signups(count)')
@@ -23,15 +23,24 @@ export default async function VolunteerDashboard() {
       .from('shift_signups')
       .select('shift_id, status')
       .eq('volunteer_id', user.id),
+    supabase
+      .from('volunteer_certifications')
+      .select('training_type')
+      .eq('volunteer_id', user.id),
+    supabase
+      .from('training_sessions')
+      .select('training_type, date, start_time, end_time, location')
+      .gte('date', today)
+      .order('date', { ascending: true })
+      .order('start_time', { ascending: true }),
   ])
 
-  // Count approved signups per shift to calculate remaining slots
+  // Build approved counts map
   const { data: approvedCounts } = await supabase
     .from('shift_signups')
     .select('shift_id, count', { count: 'exact' })
     .eq('status', 'approved')
 
-  // Build a map: shiftId → approved count
   const approvedMap = {}
   if (approvedCounts) {
     for (const row of approvedCounts) {
@@ -50,6 +59,15 @@ export default async function VolunteerDashboard() {
     my_status: mySignupMap[s.id] ?? null,
   }))
 
+  // Set of training types the volunteer has certified
+  const certSet = new Set((myCerts ?? []).map(c => c.training_type))
+
+  // Next upcoming session per training type
+  const nextSessionMap = {}
+  for (const s of nextSessions ?? []) {
+    if (!nextSessionMap[s.training_type]) nextSessionMap[s.training_type] = s
+  }
+
   return (
     <div className="min-h-screen bg-stone-50">
       <Navbar role="volunteer" name={profile?.full_name ?? ''} />
@@ -58,7 +76,12 @@ export default async function VolunteerDashboard() {
           <h1 className="text-2xl font-bold text-stone-900">Available Shifts</h1>
           <p className="text-stone-500 text-sm mt-1">Sign up for a shift — an admin will confirm your spot.</p>
         </div>
-        <AvailableShifts shifts={enrichedShifts} userId={user.id} />
+        <AvailableShifts
+          shifts={enrichedShifts}
+          userId={user.id}
+          certSet={Array.from(certSet)}
+          nextSessionMap={nextSessionMap}
+        />
       </main>
     </div>
   )
