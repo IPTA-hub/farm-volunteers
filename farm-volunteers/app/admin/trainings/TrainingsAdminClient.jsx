@@ -113,15 +113,31 @@ export default function TrainingsAdminClient({ sessions: initial, certifications
   async function manualCertify() {
     if (!manualCertVolunteer) return
     setManualCertSaving(true)
-    const res = await fetch('/api/mark-training-attendance', {
+    const res = await fetch('/api/manual-certify', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      // Use a fake sessionId workaround — instead call a direct upsert
-      body: JSON.stringify({ sessionId: '__manual__', attendeeIds: [manualCertVolunteer], trainingType: manualCertType }),
+      body: JSON.stringify({ volunteerId: manualCertVolunteer, trainingType: manualCertType }),
     })
-    // Manual cert via direct API
-    const service = await fetch('/api/create-training-session', { method: 'GET' }).catch(() => null)
-    // Use supabase directly via a simpler approach — just reload
-    window.location.reload()
+    const data = await res.json()
+    if (res.ok && data.volunteer) {
+      const alreadyExists = certifications.some(
+        c => c.volunteer_id === manualCertVolunteer && c.training_type === manualCertType
+      )
+      if (!alreadyExists) {
+        setCertifications(c => [{
+          id: Date.now().toString(),
+          volunteer_id: manualCertVolunteer,
+          training_type: manualCertType,
+          certified_at: new Date().toISOString(),
+          volunteer: data.volunteer,
+        }, ...c])
+      }
+      setManualCertVolunteer('')
+      setManualCertType('sidewalking')
+      setShowManualCert(false)
+    } else {
+      alert(data.error ?? 'Failed to certify volunteer')
+    }
+    setManualCertSaving(false)
   }
 
   return (
