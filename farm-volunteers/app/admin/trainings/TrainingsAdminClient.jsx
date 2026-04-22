@@ -284,12 +284,19 @@ export default function TrainingsAdminClient({ sessions: initial, certifications
                 ) : (
                   <ul className="divide-y divide-stone-100">
                     {typeCerts.map(c => (
-                      <li key={c.id} className="px-6 py-3 flex items-center justify-between">
+                      <li key={c.id} className="px-6 py-3 flex items-center justify-between gap-4">
                         <div>
                           <p className="text-sm font-medium text-stone-800">{c.volunteer?.full_name}</p>
                           {c.volunteer?.phone && <p className="text-xs text-stone-400">{c.volunteer.phone}</p>}
                         </div>
-                        <span className="text-xs text-stone-400">Certified {fmtDateTime(c.certified_at)}</span>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="text-xs text-stone-400">Certified {fmtDateTime(c.certified_at)}</span>
+                          <DeleteCertButton
+                            volunteerId={c.volunteer_id}
+                            trainingType={c.training_type}
+                            onDeleted={() => setCertifications(certs => certs.filter(x => !(x.volunteer_id === c.volunteer_id && x.training_type === c.training_type)))}
+                          />
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -372,6 +379,50 @@ export default function TrainingsAdminClient({ sessions: initial, certifications
         </div>
       )}
     </div>
+  )
+}
+
+function DeleteCertButton({ volunteerId, trainingType, onDeleted }) {
+  const [confirming, setConfirming] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  async function handleDelete() {
+    setDeleting(true)
+    const res = await fetch('/api/delete-certification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ volunteerId, trainingType }),
+    })
+    if (res.ok) {
+      onDeleted()
+    } else {
+      const data = await res.json()
+      alert(data.error ?? 'Failed to remove certification')
+    }
+    setDeleting(false)
+    setConfirming(false)
+  }
+
+  if (confirming) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-stone-500">Remove?</span>
+        <button onClick={handleDelete} disabled={deleting}
+          className="text-xs text-red-600 font-medium hover:underline disabled:opacity-50">
+          {deleting ? 'Removing…' : 'Yes'}
+        </button>
+        <button onClick={() => setConfirming(false)} className="text-xs text-stone-400 hover:underline">
+          No
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <button onClick={() => setConfirming(true)}
+      className="text-xs text-stone-300 hover:text-red-500 transition-colors" title="Remove certification">
+      ✕
+    </button>
   )
 }
 
