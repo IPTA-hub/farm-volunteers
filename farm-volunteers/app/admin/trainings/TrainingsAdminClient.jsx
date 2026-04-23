@@ -42,7 +42,7 @@ export default function TrainingsAdminClient({ sessions: initial, certifications
 
   // New session form
   const [showForm, setShowForm] = useState(false)
-  const DEFAULT_NOTES = `Information For Orientation Days
+  const BASE_NOTES = `Information For Orientation Days
 
 Iron Horse Address
 5020 East County Road 40
@@ -72,7 +72,14 @@ Please expect to be at the farm for a maximum of 3 hours for your training shift
 
 Thanks!`
 
-  const [form, setForm] = useState({ training_type: 'sidewalking', date: '', start_time: '', end_time: '', location: '', capacity: 10, notes: DEFAULT_NOTES })
+  const SIDEWALKING_EXTRA = `
+
+Before your arrival, please watch this short video to familiarize yourself with sidewalking:
+https://youtu.be/S1rqfxEsBbo`
+
+  const DEFAULT_NOTES = (type) => type === 'sidewalking' ? BASE_NOTES + SIDEWALKING_EXTRA : BASE_NOTES
+
+  const [form, setForm] = useState({ training_type: 'sidewalking', date: '', start_time: '', end_time: '', location: '', capacity: 10, notes: DEFAULT_NOTES('sidewalking') })
   const [creating, setCreating] = useState(false)
   const [formError, setFormError] = useState('')
 
@@ -100,7 +107,7 @@ Thanks!`
     const data = await res.json()
     if (!res.ok) { setFormError(data.error ?? 'Failed to create'); setCreating(false); return }
     setSessions(s => [...s, { ...data.session, registrations: [] }].sort((a, b) => a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time)))
-    setForm({ training_type: 'sidewalking', date: '', start_time: '', end_time: '', location: '', capacity: 10, notes: DEFAULT_NOTES })
+    setForm({ training_type: 'sidewalking', date: '', start_time: '', end_time: '', location: '', capacity: 10, notes: DEFAULT_NOTES('sidewalking') })
     setShowForm(false)
     setCreating(false)
   }
@@ -199,13 +206,14 @@ Thanks!`
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-medium text-stone-600 mb-1">Training Type</label>
-                  <select value={form.training_type} onChange={e => setForm(f => ({ ...f, training_type: e.target.value }))}
+                  <select value={form.training_type} onChange={e => setForm(f => ({ ...f, training_type: e.target.value, notes: DEFAULT_NOTES(e.target.value) }))}
                     className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
                     {TRAINING_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-stone-600 mb-1">Date</label>
+
                   <input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
                     className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                 </div>

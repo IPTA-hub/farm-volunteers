@@ -159,7 +159,7 @@ export default function TrainingsVolunteerClient({ sessions, certifications, cer
                         {s.location ? ` · ${s.location}` : ''}
                       </p>
                       <p className="text-xs text-stone-400 mt-1">{spotsLeft > 0 ? `${spotsLeft} spot${spotsLeft !== 1 ? 's' : ''} remaining` : 'No spots left'}</p>
-                      {s.notes && <p className="text-sm text-stone-500 mt-2 italic">{s.notes}</p>}
+                      {s.notes && <NotesWithLinks text={s.notes} />}
                     </div>
 
                     <div className="shrink-0 min-w-[120px]">
@@ -192,5 +192,22 @@ export default function TrainingsVolunteerClient({ sessions, certifications, cer
         )}
       </div>
     </>
+  )
+}
+
+function NotesWithLinks({ text }) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g
+  const parts = text.split(urlRegex)
+  return (
+    <div className="text-sm text-stone-600 mt-2 whitespace-pre-wrap">
+      {parts.map((part, i) =>
+        urlRegex.test(part) ? (
+          <a key={i} href={part} target="_blank" rel="noopener noreferrer"
+            className="text-green-700 underline font-medium break-all hover:text-green-800">
+            {part}
+          </a>
+        ) : part
+      )}
+    </div>
   )
 }
