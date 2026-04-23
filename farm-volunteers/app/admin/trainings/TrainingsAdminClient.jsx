@@ -50,6 +50,8 @@ Please park in the back parking lot, our front lot is reserved for patients only
 We will meet inside of the barn- not the house
 You can go through the gate next to the goat pen/mini pen
 
+If you have not already completed the Digital Intakes paperwork emailed to you, ensure that is completed prior to your arrival.
+
 Dress Code
 Volunteers should wear comfortable and appropriate clothing, including:
 
