@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import ShiftTypeTag from '@/components/ShiftTypeTag'
+import { CertBadgesCompact } from '@/components/CertBadges'
 import { createClient } from '@/lib/supabase/client'
 
 const STATUS_FILTER = ['all', 'pending', 'approved', 'rejected']
@@ -168,7 +169,12 @@ export default function ApprovalsClient({ signups: initial }) {
                       ) : null
                     })()}
                   </div>
-                  <p className="font-semibold text-stone-800 mt-1">{su.volunteer.full_name}</p>
+                  <div className="flex items-center gap-2 flex-wrap mt-1">
+                    <p className="font-semibold text-stone-800">{su.volunteer.full_name}</p>
+                    {su.volunteer.certifications?.length > 0 && (
+                      <CertBadgesCompact certifications={su.volunteer.certifications} />
+                    )}
+                  </div>
                   {su.volunteer.phone && (
                     <p className="text-xs text-stone-400 mt-0.5">{su.volunteer.phone}</p>
                   )}

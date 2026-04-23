@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import Navbar from '@/components/Navbar'
 import Link from 'next/link'
 import ShiftTypeTag from '@/components/ShiftTypeTag'
+import { CertBadges } from '@/components/CertBadges'
 
 const TYPE_LABELS = {
   sidewalking:     'Sidewalking',
@@ -40,11 +41,19 @@ export default async function VolunteerProfilePage({ params }) {
 
   if (!volunteer) redirect('/admin/volunteers')
 
-  const { data: signups } = await supabase
-    .from('shift_signups')
-    .select('id, status, hours, created_at, shift:shifts(id, type, date, start_time, end_time, notes)')
-    .eq('volunteer_id', params.id)
-    .order('created_at', { ascending: false })
+  const [{ data: signups }, { data: certs }] = await Promise.all([
+    supabase
+      .from('shift_signups')
+      .select('id, status, hours, created_at, shift:shifts(id, type, date, start_time, end_time, notes)')
+      .eq('volunteer_id', params.id)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('volunteer_certifications')
+      .select('training_type, certified_at')
+      .eq('volunteer_id', params.id),
+  ])
+
+  const certTypes = (certs ?? []).map(c => c.training_type)
 
   const approved = (signups ?? []).filter(s => s.status === 'approved' && s.shift)
   const totalHours = approved.reduce((sum, s) => sum + (s.hours ?? 0), 0)
@@ -77,6 +86,14 @@ export default async function VolunteerProfilePage({ params }) {
               <h1 className="text-2xl font-bold text-stone-900">{volunteer.full_name}</h1>
               {volunteer.phone && <p className="text-stone-500 mt-1">{volunteer.phone}</p>}
               <p className="text-xs text-stone-400 mt-1">Joined {fmtDate(volunteer.created_at?.split('T')[0])}</p>
+              {certTypes.length > 0 && (
+                <div className="mt-3">
+                  <CertBadges certifications={certTypes} />
+                </div>
+              )}
+              {certTypes.length === 0 && (
+                <p className="text-xs text-stone-400 mt-2">No certifications yet</p>
+              )}
             </div>
           </div>
 

@@ -11,18 +11,30 @@ export default async function VolunteersPage() {
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
   if (profile?.role !== 'admin') redirect('/volunteer')
 
-  // Get all volunteers with their approved signups
-  const { data: volunteers } = await supabase
-    .from('profiles')
-    .select(`
-      id, full_name, phone, created_at,
-      signups:shift_signups(
-        id, status, hours, created_at,
-        shift:shifts(type, date, start_time, end_time)
-      )
-    `)
-    .eq('role', 'volunteer')
-    .order('full_name')
+  // Get all volunteers with their approved signups and certifications
+  const [{ data: volunteers }, { data: allCerts }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select(`
+        id, full_name, phone, created_at,
+        signups:shift_signups(
+          id, status, hours, created_at,
+          shift:shifts(type, date, start_time, end_time)
+        )
+      `)
+      .eq('role', 'volunteer')
+      .order('full_name'),
+    supabase
+      .from('volunteer_certifications')
+      .select('volunteer_id, training_type'),
+  ])
+
+  // Build cert map: volunteerId → [training_type, ...]
+  const certMap = {}
+  for (const c of allCerts ?? []) {
+    if (!certMap[c.volunteer_id]) certMap[c.volunteer_id] = []
+    certMap[c.volunteer_id].push(c.training_type)
+  }
 
   const enriched = (volunteers ?? []).map(v => {
     const approved = v.signups?.filter(s => s.status === 'approved') ?? []
@@ -44,6 +56,7 @@ export default async function VolunteersPage() {
       monthHours: parseFloat(monthHours.toFixed(2)),
       yearHours: parseFloat(yearHours.toFixed(2)),
       shiftCount: approved.length,
+      certifications: certMap[v.id] ?? [],
     }
   })
 

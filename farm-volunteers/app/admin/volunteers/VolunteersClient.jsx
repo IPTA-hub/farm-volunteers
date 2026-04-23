@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import { CertBadgesCompact } from '@/components/CertBadges'
 
 export default function VolunteersClient({ volunteers }) {
   const [search, setSearch] = useState('')
@@ -94,6 +95,11 @@ export default function VolunteersClient({ volunteers }) {
                 <td className="px-4 py-3">
                   <div className="font-medium text-stone-800">{v.full_name}</div>
                   {v.phone && <div className="text-xs text-stone-400">{v.phone}</div>}
+                  {v.certifications?.length > 0 && (
+                    <div className="mt-1">
+                      <CertBadgesCompact certifications={v.certifications} />
+                    </div>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-right text-stone-600">{v.monthHours}h</td>
                 <td className="px-4 py-3 text-right text-stone-600">{v.yearHours}h</td>
