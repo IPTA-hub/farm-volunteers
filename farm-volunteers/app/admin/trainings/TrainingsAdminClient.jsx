@@ -42,7 +42,35 @@ export default function TrainingsAdminClient({ sessions: initial, certifications
 
   // New session form
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ training_type: 'sidewalking', date: '', start_time: '', end_time: '', location: '', capacity: 10, notes: '' })
+  const DEFAULT_NOTES = `Information For Orientation Days
+
+Iron Horse Address
+5020 East County Road 40
+Please park in the back parking lot, our front lot is reserved for patients only.
+We will meet inside of the barn- not the house
+You can go through the gate next to the goat pen/mini pen
+
+Dress Code
+Volunteers should wear comfortable and appropriate clothing, including:
+
+Work gloves
+Long pants
+Sturdy boots / hiking shoes (no steel toed boots)
+Weather appropriate clothing - Currently our program takes place 100% outdoors:
+
+In the summertime, please wear appropriate shirts and tank tops. Tanks must be 1 inch wide and keep a high neckline. Please no midriff showing as well (no cropped tops).
+
+In the winter, please be prepared to have a thick jacket, gloves, scarf if needed, hat, mittens, etc.
+
+Sunglasses
+Sunscreen
+Water bottles & snacks are encouraged! Please stay hydrated and keep your energy levels up.
+
+Please expect to be at the farm for a maximum of 3 hours for your training shift.
+
+Thanks!`
+
+  const [form, setForm] = useState({ training_type: 'sidewalking', date: '', start_time: '', end_time: '', location: '', capacity: 10, notes: DEFAULT_NOTES })
   const [creating, setCreating] = useState(false)
   const [formError, setFormError] = useState('')
 
@@ -70,7 +98,7 @@ export default function TrainingsAdminClient({ sessions: initial, certifications
     const data = await res.json()
     if (!res.ok) { setFormError(data.error ?? 'Failed to create'); setCreating(false); return }
     setSessions(s => [...s, { ...data.session, registrations: [] }].sort((a, b) => a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time)))
-    setForm({ training_type: 'sidewalking', date: '', start_time: '', end_time: '', location: '', capacity: 10, notes: '' })
+    setForm({ training_type: 'sidewalking', date: '', start_time: '', end_time: '', location: '', capacity: 10, notes: DEFAULT_NOTES })
     setShowForm(false)
     setCreating(false)
   }
@@ -201,8 +229,8 @@ export default function TrainingsAdminClient({ sessions: initial, certifications
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-medium text-stone-600 mb-1">Notes (optional)</label>
-                  <textarea rows={2} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                    className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none" />
+                  <textarea rows={12} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                    className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-y" />
                 </div>
               </div>
               {formError && <p className="text-red-600 text-sm mt-2">{formError}</p>}
