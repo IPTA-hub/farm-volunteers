@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 export default function RegisterPage() {
-  const [form, setForm] = useState({ full_name: '', email: '', phone: '', password: '', confirm: '' })
+  const [form, setForm] = useState({ full_name: '', email: '', phone: '', password: '', confirm: '', invite_code: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -16,12 +16,29 @@ export default function RegisterPage() {
 
   async function handleRegister(e) {
     e.preventDefault()
-    if (form.password !== form.confirm) {
-      setError('Passwords do not match.')
-      return
-    }
     setLoading(true)
     setError('')
+
+    if (form.password !== form.confirm) {
+      setError('Passwords do not match.')
+      setLoading(false)
+      return
+    }
+
+    // Validate invite code first
+    const inviteRes = await fetch('/api/validate-invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: form.invite_code }),
+    })
+    const inviteData = await inviteRes.json()
+    if (!inviteRes.ok) {
+      setError(inviteData.error ?? 'Invalid invite code.')
+      setLoading(false)
+      return
+    }
+
+    // Create account
     const supabase = createClient()
     const { data, error } = await supabase.auth.signUp({
       email: form.email,
@@ -55,7 +72,7 @@ export default function RegisterPage() {
       <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-green-900">Create Volunteer Account</h1>
-          <p className="text-stone-500 mt-1 text-sm">Join the farm volunteer team</p>
+          <p className="text-stone-500 mt-1 text-sm">Iron Horse Therapeutic Farm</p>
         </div>
 
         <form onSubmit={handleRegister} className="space-y-4">
@@ -65,7 +82,23 @@ export default function RegisterPage() {
             </div>
           )}
 
+          {/* Invite code — first so it's the first gate */}
           <div>
+            <label className="block text-sm font-medium text-stone-700 mb-1">
+              Invite Code <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={form.invite_code}
+              onChange={set('invite_code')}
+              required
+              placeholder="Provided by Iron Horse staff"
+              className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+            <p className="text-xs text-stone-400 mt-1">Don't have one? Contact us at ironhorsetherapy.org</p>
+          </div>
+
+          <div className="border-t border-stone-100 pt-4">
             <label className="block text-sm font-medium text-stone-700 mb-1">Full Name</label>
             <input
               type="text"
