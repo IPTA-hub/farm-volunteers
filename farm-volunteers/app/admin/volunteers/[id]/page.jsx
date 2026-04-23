@@ -4,6 +4,7 @@ import Navbar from '@/components/Navbar'
 import Link from 'next/link'
 import ShiftTypeTag from '@/components/ShiftTypeTag'
 import { CertBadges } from '@/components/CertBadges'
+import RestoreButton from './RestoreButton'
 
 const TYPE_LABELS = {
   sidewalking:     'Sidewalking',
@@ -35,7 +36,7 @@ export default async function VolunteerProfilePage({ params }) {
 
   const { data: volunteer } = await supabase
     .from('profiles')
-    .select('id, full_name, phone, created_at')
+    .select('id, full_name, phone, created_at, archived, archived_at')
     .eq('id', params.id)
     .single()
 
@@ -93,6 +94,14 @@ export default async function VolunteerProfilePage({ params }) {
               )}
               {certTypes.length === 0 && (
                 <p className="text-xs text-stone-400 mt-2">No certifications yet</p>
+              )}
+              {volunteer.archived && (
+                <div className="flex items-center gap-3 mt-3">
+                  <span className="text-xs bg-stone-100 text-stone-500 border border-stone-200 px-2.5 py-1 rounded-full font-medium">
+                    Archived {volunteer.archived_at ? `· ${new Date(volunteer.archived_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}
+                  </span>
+                  <RestoreButton volunteerId={volunteer.id} />
+                </div>
               )}
             </div>
           </div>
