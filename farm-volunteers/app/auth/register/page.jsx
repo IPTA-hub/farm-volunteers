@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ full_name: '', email: '', phone: '', password: '', confirm: '', invite_code: '' })
+  const [smsConsent, setSmsConsent] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -21,6 +22,12 @@ export default function RegisterPage() {
 
     if (form.password !== form.confirm) {
       setError('Passwords do not match.')
+      setLoading(false)
+      return
+    }
+
+    if (form.phone && !smsConsent) {
+      setError('Please check the SMS consent box to receive shift reminders, or remove your phone number to skip SMS.')
       setLoading(false)
       return
     }
@@ -132,6 +139,42 @@ export default function RegisterPage() {
               className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
             />
           </div>
+
+          {/* SMS consent — shown whenever a phone number is entered */}
+          {form.phone && (
+            <div className="bg-stone-50 border border-stone-200 rounded-lg p-3">
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={smsConsent}
+                  onChange={e => setSmsConsent(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-stone-300 text-green-700 focus:ring-green-500 shrink-0"
+                />
+                <span className="text-xs text-stone-600 leading-relaxed">
+                  I consent to receive SMS text messages from <strong>Iron Horse Therapeutic Farm</strong> for shift
+                  reminders, schedule confirmations, and volunteer coordination. Message frequency varies.
+                  Message &amp; data rates may apply. Reply <strong>STOP</strong> to opt out at any time.{' '}
+                  <a
+                    href="https://www.ironhorsetherapy.org/privacy-policy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-green-700 underline"
+                  >
+                    Privacy Policy
+                  </a>
+                  {' · '}
+                  <a
+                    href="https://www.ironhorsetherapy.org/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-green-700 underline"
+                  >
+                    Terms
+                  </a>
+                </span>
+              </label>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-stone-700 mb-1">Password</label>
